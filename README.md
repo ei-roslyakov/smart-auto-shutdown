@@ -1,6 +1,11 @@
 # 🖥️ CPU Monitor Auto-Shutdown Script
 
-This script monitors CPU usage and automatically shuts down the system if usage remains below a specified threshold for a given period. Users can **postpone shutdown manually** or cancel it via an interactive prompt.
+![EC2 Meme](assets/ec2.png)
+
+Ever forgotten an **EC2 instance running overnight** and received a **massive AWS bill**? 😨
+This script **automatically shuts down idle instances**, saving you from unexpected cloud costs!
+
+The script monitors CPU usage and automatically shuts down the system if usage remains below a specified threshold for a given period. Users can **postpone shutdown manually** or cancel it via an interactive prompt.
 
 ---
 
