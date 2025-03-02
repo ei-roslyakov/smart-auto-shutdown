@@ -1,0 +1,29 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+echo "Usage: postpone_shutdown <duration>"
+echo "Example: postpone_shutdown 5h (postpone for 5 hours)"
+exit 1
+fi
+
+DURATION=$1
+SECONDS=0
+
+if [[ "$DURATION" =~ ^([0-9]+)h$ ]]; then
+    SECONDS=$((BASH_REMATCH[1] * 3600))
+elif [[ "$DURATION" =~ ^([0-9]+)m$ ]]; then
+    SECONDS=$((BASH_REMATCH[1] * 60))
+elif [[ "$DURATION" =~ ^([0-9]+)s$ ]]; then
+    SECONDS=$((BASH_REMATCH[1]))
+else
+    echo "Invalid duration format! Use <number>h, <number>m, or <number>s."
+    exit 1
+fi
+
+POSTPONE_UNTIL=$(( $(date +%s) + SECONDS ))
+SYSTEM_UPTIME=$(awk '{print $1}' /proc/uptime)
+
+# Store both timestamp and system uptime
+echo -e "$POSTPONE_UNTIL\n$SYSTEM_UPTIME" | sudo tee /tmp/cpu_monitor_postpone_until > /dev/null
+
+echo "🛑 Shutdown postponed for $DURATION!"

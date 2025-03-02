@@ -1,0 +1,4 @@
+---
+cpu_monitor_monitor_user: "root"  # User to run the script
+cpu_monitor_script_path: "/usr/local/bin/monitor.py"
+cpu_monitor_log_file: "/home/{{ monitor_user }}/cpu_monitor.json"

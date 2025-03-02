@@ -1,0 +1,96 @@
+---
+- name: Ensure required APT packages are installed
+  ansible.builtin.apt:
+    name:
+      - python3-psutil
+      - python3-pip
+    state: present
+    update_cache: true
+
+- name: Copy requirements.txt to remote machine
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/requirements.txt"
+    dest: /tmp/requirements.txt
+    mode: '0644'
+
+- name: Install Python packages (force system-wide)
+  ansible.builtin.pip:
+    requirements: /tmp/requirements.txt
+    extra_args: "{{ '--break-system-packages' if ansible_distribution in ['Debian', 'Ubuntu'] else '' }}"
+
+- name: Copy CPU monitoring script
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/monitor.py"
+    dest: "{{ cpu_monitor_script_path }}"
+    owner: "{{ cpu_monitor_monitor_user }}"
+    group: "{{ cpu_monitor_monitor_user }}"
+    mode: "0755"
+
+- name: Deploy system-wide `postpone_shutdown` command
+  ansible.builtin.copy:
+    dest: /usr/local/bin/postpone_shutdown
+    content: |
+      #!/bin/bash
+
+      if [ -z "$1" ]; then
+        echo "Usage: postpone_shutdown <duration>"
+        echo "Example: postpone_shutdown 5h (postpone for 5 hours)"
+        exit 1
+      fi
+
+      DURATION=$1
+      SECONDS=0
+
+      if [[ "$DURATION" =~ ^([0-9]+)h$ ]]; then
+          SECONDS=$((BASH_REMATCH[1] * 3600))
+      elif [[ "$DURATION" =~ ^([0-9]+)m$ ]]; then
+          SECONDS=$((BASH_REMATCH[1] * 60))
+      elif [[ "$DURATION" =~ ^([0-9]+)s$ ]]; then
+          SECONDS=$((BASH_REMATCH[1]))
+      else
+          echo "Invalid duration format! Use <number>h, <number>m, or <number>s."
+          exit 1
+      fi
+
+      POSTPONE_UNTIL=$(( $(date +%s) + SECONDS ))
+      SYSTEM_UPTIME=$(awk '{print $1}' /proc/uptime)
+
+      # ✅ Store both timestamp and system uptime
+      echo -e "$POSTPONE_UNTIL\n$SYSTEM_UPTIME" | sudo tee /tmp/cpu_monitor_postpone_until > /dev/null
+
+      echo "🛑 Shutdown postponed for $DURATION!"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Copy systemd service file
+  ansible.builtin.template:
+    src: monitor.service.j2
+    dest: "/etc/systemd/system/monitor.service"
+    mode: "0644"
+
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Restart CPU Monitor Service
+  ansible.builtin.systemd:
+    name: monitor.service
+    state: restarted
+
+- name: Enable and start CPU monitor service
+  ansible.builtin.systemd:
+    name: monitor.service
+    enabled: true
+    state: started
+
+- name: Verify CPU monitor service status
+  ansible.builtin.systemd:
+    name: monitor.service
+    state: started
+  register: service_status
+  changed_when: false
+
+- name: Display service status
+  ansible.builtin.debug:
+    msg: "CPU Monitor Service is {{ service_status.status.ActiveState }}"

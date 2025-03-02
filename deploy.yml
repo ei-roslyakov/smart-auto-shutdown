@@ -1,0 +1,6 @@
+---
+- name: Deploy CPU Monitor Role
+  hosts: all
+  become: true
+  roles:
+    - cpu_monitor

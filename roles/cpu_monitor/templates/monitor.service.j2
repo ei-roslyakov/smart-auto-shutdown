@@ -1,0 +1,16 @@
+[Unit]
+Description=CPU Monitor Shutdown Service
+After=network.target
+
+[Service]
+WorkingDirectory=/root
+ExecStart=/usr/bin/python3 {{ cpu_monitor_script_path }}
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+TTYPath=/dev/console
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
