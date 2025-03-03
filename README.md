@@ -31,13 +31,7 @@ sudo apt update && sudo apt install -y python3-pip python3-psutil python3-venv
 pip3 install -r requirements.txt
 ```
 
-### **2️⃣ Clone the Repository**
-
-```sh
-git clone <repo-url> && cd <repo-name>
-```
-
-### **3️⃣ Deploy the Script**
+### **2️⃣ Deploy the Script**
 
 Copy the script to `/usr/local/bin/`:
 
@@ -46,7 +40,7 @@ sudo cp monitor.py /usr/local/bin/monitor.py
 sudo chmod +x /usr/local/bin/monitor.py
 ```
 
-### **4️⃣ Deploy the Postpone Shutdown Command**
+### **3️⃣ Deploy the Postpone Shutdown Command**
 
 ```sh
 sudo cp postpone_shutdown /usr/local/bin/postpone_shutdown
