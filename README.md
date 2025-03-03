@@ -26,7 +26,9 @@ The script monitors CPU usage and automatically shuts down the system if usage r
 Run the following command to install required dependencies:
 
 ```sh
-sudo apt update && sudo apt install -y python3-pip python3-psutil
+sudo apt update && sudo apt install -y python3-pip python3-psutil python3-venv
+
+pip3 install -r requirements.txt
 ```
 
 ### **2️⃣ Clone the Repository**
@@ -55,7 +57,7 @@ sudo chmod +x /usr/local/bin/postpone_shutdown
 
 ## 🔧 Systemd Service Configuration
 
-### **1️⃣ Create a Systemd Service**
+### **1️⃣ Create a Systemd Service without Virtualenv**
 
 Create a new systemd service file:
 
@@ -67,6 +69,42 @@ After=network.target
 
 [Service]
 ExecStart=/usr/bin/python3 /usr/local/bin/monitor.py
+Restart=always
+RestartSec=5
+StandardOutput=journal+console
+StandardError=journal+console
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+EOF
+```
+
+### **1️⃣ Run the Service in a Virtual Environment**
+
+Create and Activate a Virtual Environment
+
+```sh
+python3 -m venv /opt/cpu_monitor_venv
+source /opt/cpu_monitor_venv/bin/activate
+```
+
+Install Dependencies Inside Virtualenv
+
+```sh
+pip3 install -r requirements.txt
+```
+
+Create a new systemd service file:
+
+```sh
+sudo tee /etc/systemd/system/monitor.service > /dev/null <<EOF
+[Unit]
+Description=CPU Monitor Shutdown Service
+After=network.target
+
+[Service]
+ExecStart=/opt/cpu_monitor_venv/bin/python /usr/local/bin/monitor.py
 Restart=always
 RestartSec=5
 StandardOutput=journal+console
