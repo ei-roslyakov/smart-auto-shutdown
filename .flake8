@@ -1,0 +1,36 @@
+[flake8]
+exclude =
+	.git,
+	.idea,
+	__pycache__,
+	dist,
+	doc,
+	sensitive,
+	tmp,
+	venv,
+	__init__.py,
+	migrations/*,
+	logs/*
+
+max-line-length = 120
+max-complexity = 10
+filename = *.py
+format = default
+inline-quotes = "
+ignore =
+	# E221 multiple spaces before operator
+	E221,
+	# whitespace before ':'
+	E203,
+	# whitespace before ')'
+	E202,
+	# multiple spaces after ','
+	E241,
+	# unexpected spaces around keyword / parameter equals
+	E251,
+	#comparison to True should be 'if cond is True:' or 'if cond (it's needed for SQLAlchemy)
+	E712,
+	#line break after binary operator
+	W504,
+	# Found commented out code
+	E800
