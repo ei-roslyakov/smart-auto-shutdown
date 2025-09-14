@@ -1,9 +1,9 @@
 #!/bin/bash
 
 if [ -z "$1" ]; then
-echo "Usage: postpone_shutdown <duration>"
-echo "Example: postpone_shutdown 5h (postpone for 5 hours)"
-exit 1
+  echo "Usage: postpone_shutdown <duration>"
+  echo "Example: postpone_shutdown 5h (postpone for 5 hours)"
+  exit 1
 fi
 
 DURATION=$1
@@ -23,7 +23,7 @@ fi
 POSTPONE_UNTIL=$(( $(date +%s) + SECONDS ))
 SYSTEM_UPTIME=$(awk '{print $1}' /proc/uptime)
 
-# Store both timestamp and system uptime
+# ✅ Store both timestamp and system uptime
 echo -e "$POSTPONE_UNTIL\n$SYSTEM_UPTIME" | sudo tee /tmp/cpu_monitor_postpone_until > /dev/null
 
 echo "🛑 Shutdown postponed for $DURATION!"

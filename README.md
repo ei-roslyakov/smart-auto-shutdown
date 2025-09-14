@@ -16,6 +16,10 @@ The script monitors CPU usage and automatically shuts down the system if usage r
 - ✅ **Notifies all users before shutdown** with an interactive prompt.
 - ✅ **Users can postpone shutdown** manually or interactively.
 - ✅ **Prevents postponed shutdown from persisting after a system reboot.**
+- ✅ **Time-restricted monitoring** - Only monitors during specified hours (configurable).
+- ✅ **SSH session detection** - Prevents shutdown when active SSH sessions are detected.
+- ✅ **Enhanced logging** with structured log format and rotation.
+- ✅ **Improved postpone mechanism** with system uptime tracking.
 
 ---
 
@@ -28,6 +32,7 @@ Run the following command to install required dependencies:
 ```sh
 sudo apt update && sudo apt install -y python3-pip python3-psutil python3-venv
 
+# Install Python dependencies
 pip3 install -r requirements.txt
 ```
 
@@ -130,20 +135,43 @@ sudo systemctl status monitor.service
 
 You can modify the following **environment variables** before running the script:
 
-| Variable         | Default | Description                                                              |
-| ---------------- | ------- | ------------------------------------------------------------------------ |
-| `CPU_THRESHOLD`  | `10`    | CPU usage percentage below which the system will shut down.              |
-| `CHECK_INTERVAL` | `60`    | Time interval (in seconds) between CPU usage checks.                     |
-| `TIME_PERIOD`    | `300`   | Total time (in seconds) CPU must be below the threshold before shutdown. |
-| `NOTIFY_PERIOD`  | `60`    | Time (in seconds) before shutdown notification appears.                  |
+| Variable                        | Default | Description                                                                      |
+| ------------------------------- | ------- | -------------------------------------------------------------------------------- |
+| `CPU_THRESHOLD`                 | `10`    | CPU usage percentage below which the system will shut down.                     |
+| `CHECK_INTERVAL`                | `60`    | Time interval (in seconds) between CPU usage checks.                            |
+| `TIME_PERIOD`                   | `3600`  | Total time (in seconds) CPU must be below the threshold before shutdown.        |
+| `NOTIFY_PERIOD`                 | `300`   | Time (in seconds) before shutdown notification appears.                         |
+| `ALLOWED_START_HOUR`            | `19`    | Hour (24h format) when monitoring starts (UTC timezone).                       |
+| `ALLOWED_END_HOUR`              | `8`     | Hour (24h format) when monitoring ends (UTC timezone).                         |
+| `RESTRICTED_HOURS`              | `true`  | Enable/disable time-restricted monitoring (`true` or `false`).                  |
+| `DENY_TURN_OFF_WHEN_ACTIVE_SSH` | `true`  | Prevent shutdown when active SSH sessions are detected (`true` or `false`).     |
 
-Example:
+### **Time-Restricted Monitoring**
+
+By default, the script only monitors between **19:00 and 08:00 UTC**. This prevents accidental shutdowns during typical working hours. You can:
+
+- **Disable time restrictions**: Set `RESTRICTED_HOURS=false`
+- **Customize monitoring window**: Adjust `ALLOWED_START_HOUR` and `ALLOWED_END_HOUR`
+
+### **SSH Session Protection**
+
+The script automatically detects active SSH sessions and prevents shutdown to avoid interrupting user work. To disable this feature:
+
+```sh
+export DENY_TURN_OFF_WHEN_ACTIVE_SSH=false
+```
+
+Example configuration:
 
 ```sh
 export CPU_THRESHOLD=5
 export CHECK_INTERVAL=30
 export TIME_PERIOD=600
 export NOTIFY_PERIOD=120
+export ALLOWED_START_HOUR=20
+export ALLOWED_END_HOUR=7
+export RESTRICTED_HOURS=true
+export DENY_TURN_OFF_WHEN_ACTIVE_SSH=true
 ```
 
 ---
@@ -163,33 +191,54 @@ Examples:
 ```sh
 postpone_shutdown 30m  # Postpone for 30 minutes
 postpone_shutdown 2h   # Postpone for 2 hours
+postpone_shutdown 15s  # Postpone for 15 seconds
 ```
+
+The postpone mechanism now includes **system uptime tracking** to prevent postponed shutdowns from persisting after system reboots.
 
 ### **2️⃣ Interactive Prompt**
 
 When the system is about to shut down, users will see:
 
 ```
-🚠 WARNING: System will shut down in 60 seconds due to low CPU utilization!
+⚠️ WARNING: System will shut down in 300 seconds due to low CPU utilization!
 🚀 Press any key to cancel shutdown or run 'postpone_shutdown <duration>' to delay shutdown.
 ```
 
-Simply **press any key** to cancel the shutdown.
+Simply **press any key** to cancel the shutdown and automatically postpone it for **10 minutes**.
 
 ---
 
 ## 📄 Logging & Debugging
 
-Logs can be found in:
+The script uses **structured logging** with automatic log rotation. Logs are written to multiple locations:
 
+### **System Logs**
 ```sh
+# View system service logs
 sudo journalctl -u monitor.service -f
+
+# View dedicated log file (with rotation)
+sudo tail -f /var/log/cpu_monitor.log
 ```
 
-To check the **postpone status**:
+### **Log Format**
+The script uses a structured log format:
+```
+2025-09-14 12:30:45 | INFO | 🚀 CPU Monitor Script Started
+2025-09-14 12:30:45 | INFO | 📊 CPU Usage: 5.23% (Threshold: 10%)
+2025-09-14 12:30:45 | INFO | ✅ 1/60 readings below threshold.
+```
 
+### **Check Postpone Status**
 ```sh
-cat /tmp/monitor_postpone_until
+cat /tmp/cpu_monitor_postpone_until
+```
+
+### **Debug Configuration**
+The script logs all configuration values on startup:
+```sh
+sudo journalctl -u monitor.service | grep "Loaded Configuration" -A 10
 ```
 
 ---
@@ -208,10 +257,19 @@ sudo systemctl daemon-reload
 
 ---
 
-## 📈 Future Improvements
+## 📈 Recent Improvements & Future Ideas
 
-- [ ] **Implement network monitoring to detect system activity.**
-- [ ] **Monitor active SSH sessions to prevent shutdown if users are connected.**
+### ✅ **Recently Implemented**
+- ✅ **SSH session monitoring** - System prevents shutdown when active SSH sessions are detected
+- ✅ **Time-restricted monitoring** - Configurable monitoring hours to prevent daytime shutdowns
+- ✅ **Enhanced logging** - Structured logging with automatic rotation using loguru
+- ✅ **Improved postpone mechanism** - System uptime tracking prevents postpone persistence after reboots
+- ✅ **Better configuration** - Comprehensive environment variable support with logging
+
+### 🔮 **Future Ideas**
+- [ ] **Network activity monitoring** to detect system activity beyond CPU usage
+- [ ] **Web dashboard** for remote monitoring and control
+- [ ] **Slack/Discord notifications** before shutdown
 
 ---
 
