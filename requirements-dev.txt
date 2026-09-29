@@ -1,6 +1,6 @@
 -r requirements.txt
 
-flake8==7.3.0
+flake8==7.4.1
 flake8-2020==1.8.1
 flake8-alfred==1.1.2
 flake8-bandit==4.1.1
